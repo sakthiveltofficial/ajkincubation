@@ -15,6 +15,10 @@ const ContactForm = () => {
     message: ''
   });
 
+  // Form submission states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState({ type: '', message: '' });
+
   // Modal state management
   const [activeModal, setActiveModal] = useState(null);
 
@@ -34,10 +38,48 @@ const ContactForm = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Handle form submission here
+    setIsSubmitting(true);
+    setSubmitStatus({ type: '', message: '' });
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setSubmitStatus({
+          type: 'success',
+          message: 'Thank you! Your message has been sent successfully. We will get back to you soon.'
+        });
+        // Reset form
+        setFormData({
+          firstName: '',
+          email: '',
+          phoneNumber: '',
+          message: ''
+        });
+      } else {
+        setSubmitStatus({
+          type: 'error',
+          message: result.error || 'Something went wrong. Please try again.'
+        });
+      }
+    } catch (error) {
+      setSubmitStatus({
+        type: 'error',
+        message: 'Network error. Please check your connection and try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -133,14 +175,39 @@ const ContactForm = () => {
               </div>
             </div>
 
+            {/* Status Message */}
+            {submitStatus.message && (
+              <div className={`p-4 rounded-lg mb-4 text-sm font-medium ${
+                submitStatus.type === 'success' 
+                  ? 'bg-green-50 text-green-800 border border-green-200' 
+                  : 'bg-red-50 text-red-800 border border-red-200'
+              }`}>
+                {submitStatus.message}
+              </div>
+            )}
+
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full h-[50px] sm:h-[56px] bg-transparent text-black font-outfit font-medium text-lg sm:text-xl lg:text-[24px] leading-[30px] rounded-md flex items-center justify-center gap-2 border relative overflow-hidden group transition-colors duration-300 cursor-pointer mt-6"
+              disabled={isSubmitting}
+              className={`w-full h-[50px] sm:h-[56px] bg-transparent text-black font-outfit font-medium text-lg sm:text-xl lg:text-[24px] leading-[30px] rounded-md flex items-center justify-center gap-2 border relative overflow-hidden group transition-colors duration-300 mt-6 ${
+                isSubmitting ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'
+              }`}
             >
-              <div className="absolute inset-0 bg-[#4e73ff] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out"></div>
-              <span className="relative z-10 group-hover:text-white transition-colors duration-300">
-                Register Now
+              <div className={`absolute inset-0 bg-[#4e73ff] transform transition-transform duration-500 ease-out ${
+                isSubmitting ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0'
+              }`}></div>
+              <span className={`relative z-10 transition-colors duration-300 ${
+                isSubmitting ? 'text-white' : 'group-hover:text-white'
+              }`}>
+                {isSubmitting ? (
+                  <div className="flex items-center gap-3">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Sending...</span>
+                  </div>
+                ) : (
+                  'Register Now'
+                )}
               </span>
             </button>
           </form>
