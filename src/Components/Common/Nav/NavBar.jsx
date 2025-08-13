@@ -10,7 +10,7 @@ import { useNavbarStore } from "../../../store/navbarStore";
 
 function NavBar() {
   const pathname = usePathname(); // Gets current path like "/contact", "/about", etc.
-  const { isModalOpen, isDesktopMenuOpen, setIsModalOpen, setIsDesktopMenuOpen } = useNavbarStore();
+  const { isModalOpen, isDesktopMenuOpen, setIsModalOpen, setIsDesktopMenuOpen, handlePageChange } = useNavbarStore();
   const modalRef = useRef(null);
   const overlayRef = useRef(null);
   const navItemsRef = useRef(null);
@@ -84,6 +84,11 @@ function NavBar() {
     }
   }, [isModalOpen]);
 
+  // Handle page changes to automatically open/close desktop menu
+  useEffect(() => {
+    handlePageChange(pathname);
+  }, [pathname, handlePageChange]);
+
   const handleMenuClick = () => {
     setIsModalOpen(true);
   };
@@ -92,19 +97,37 @@ function NavBar() {
     setIsModalOpen(false);
   };
 
-  const handleLinkClick = () => {
+  const handleLinkClick = (href) => {
     setIsModalOpen(false);
-    setIsDesktopMenuOpen(false); // Also close desktop menu when clicking a link
+    
+    // Only close desktop menu if navigating to home page
+    const isNavigatingToHome = href === '/';
+    if (isNavigatingToHome) {
+      setIsDesktopMenuOpen(false);
+    }
   };
 
   const handleDesktopMenuToggle = () => {
-    setIsDesktopMenuOpen(!isDesktopMenuOpen);
+    const isHomePage = pathname === '/' || pathname === '';
+    
+    // On home page, allow normal toggle behavior
+    if (isHomePage) {
+      setIsDesktopMenuOpen(!isDesktopMenuOpen);
+    } else {
+      // On other pages, only allow closing (since it should always be open)
+      if (isDesktopMenuOpen) {
+        setIsDesktopMenuOpen(false);
+      }
+    }
   };
 
-  // Close desktop menu when clicking outside
+  // Close desktop menu when clicking outside (only on home page)
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isDesktopMenuOpen && !event.target.closest('.desktop-menu-container')) {
+      const isHomePage = pathname === '/' || pathname === '';
+      
+      // Only allow closing via outside click on home page
+      if (isHomePage && isDesktopMenuOpen && !event.target.closest('.desktop-menu-container')) {
         setIsDesktopMenuOpen(false);
       }
     };
@@ -113,7 +136,7 @@ function NavBar() {
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isDesktopMenuOpen]);
+  }, [isDesktopMenuOpen, pathname]);
 
   return (
     <>
@@ -152,49 +175,49 @@ function NavBar() {
             <Link
               className="text-black text-sm md:text-lg whitespace-nowrap relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:transition-all after:duration-300 after:bg-gradient-to-r after:from-[#6b95ff] after:to-[#4e73ff]"
               href="/"
-              onClick={handleLinkClick}
+              onClick={() => handleLinkClick('/')}
             >
               Home
             </Link>
             <Link
               className="text-black text-sm md:text-lg whitespace-nowrap relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:transition-all after:duration-300 after:bg-gradient-to-r after:from-[#6b95ff] after:to-[#4e73ff]"
               href="/about"
-              onClick={handleLinkClick}
+              onClick={() => handleLinkClick('/about')}
             >
               About us
             </Link>
             <Link
               className="text-black text-sm md:text-lg whitespace-nowrap relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:transition-all after:duration-300 after:bg-gradient-to-r after:from-[#6b95ff] after:to-[#4e73ff]"
               href="/service"
-              onClick={handleLinkClick}
+              onClick={() => handleLinkClick('/service')}
             >
              Programs & Services
             </Link>
             <Link
               className="text-black text-sm md:text-lg whitespace-nowrap relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:transition-all after:duration-300 after:bg-gradient-to-r after:from-[#6b95ff] after:to-[#4e73ff]"
               href="/events"
-              onClick={handleLinkClick}
+              onClick={() => handleLinkClick('/events')}
             >
               Events
             </Link>
             <Link
               className="text-black text-sm md:text-lg whitespace-nowrap relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:transition-all after:duration-300 after:bg-gradient-to-r after:from-[#6b95ff] after:to-[#4e73ff]"
               href="/startups"
-              onClick={handleLinkClick}
+              onClick={() => handleLinkClick('/startups')}
             >
               Startups TN
             </Link>
             <Link
               className="text-black text-sm md:text-lg whitespace-nowrap relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:transition-all after:duration-300 after:bg-gradient-to-r after:from-[#6b95ff] after:to-[#4e73ff]"
               href="/resource"
-              onClick={handleLinkClick}
+              onClick={() => handleLinkClick('/resource')}
             >
               Resource
             </Link>
             <Link
               className="text-black text-sm md:text-lg whitespace-nowrap relative after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:transition-all after:duration-300 after:bg-gradient-to-r after:from-[#6b95ff] after:to-[#4e73ff]"
               href="/contact"
-              onClick={handleLinkClick}
+              onClick={() => handleLinkClick('/contact')}
             >
               Contact us
             </Link>
@@ -280,7 +303,7 @@ function NavBar() {
                <Link
                  className="flex items-center text-3xl font-extrabold text-gray-800 py-3 border-b border-gray-100 hover:text-[#6b95ff] transition-colors"
                  href="/"
-                 onClick={handleLinkClick}
+                 onClick={() => handleLinkClick('/')}
                >
                  <Home className="w-8 h-8 mr-4" />
                  Home
@@ -288,7 +311,7 @@ function NavBar() {
                <Link
                  className="flex items-center text-3xl font-extrabold text-gray-800 py-3 border-b border-gray-100 hover:text-[#6b95ff] transition-colors"
                  href="/about"
-                 onClick={handleLinkClick}
+                 onClick={() => handleLinkClick('/about')}
                >
                  <Users className="w-8 h-8 mr-4" />
                  About us
@@ -296,7 +319,7 @@ function NavBar() {
                <Link
                  className="flex items-center text-3xl font-extrabold text-gray-800 py-3 border-b border-gray-100 hover:text-[#6b95ff] transition-colors"
                  href="/service"
-                 onClick={handleLinkClick}
+                 onClick={() => handleLinkClick('/service')}
                >
                  <Briefcase className="w-8 h-8 mr-4" />
                  Programs & Services
@@ -304,7 +327,7 @@ function NavBar() {
                <Link
                  className="flex items-center text-3xl font-extrabold text-gray-800 py-3 border-b border-gray-100 hover:text-[#6b95ff] transition-colors"
                  href="/events"
-                 onClick={handleLinkClick}
+                 onClick={() => handleLinkClick('/events')}
                >
                  <Calendar className="w-8 h-8 mr-4" />
                  Events
@@ -312,7 +335,7 @@ function NavBar() {
                <Link
                  className="flex items-center text-3xl font-extrabold text-gray-800 py-3 border-b border-gray-100 hover:text-[#6b95ff] transition-colors"
                  href="/startups"
-                 onClick={handleLinkClick}
+                 onClick={() => handleLinkClick('/startups')}
                >
                  <Rocket className="w-8 h-8 mr-4" />
                  Startups TN
@@ -320,7 +343,7 @@ function NavBar() {
                <Link
                  className="flex items-center text-3xl font-extrabold text-gray-800 py-3 border-b border-gray-100 hover:text-[#6b95ff] transition-colors"
                  href="/resource"
-                 onClick={handleLinkClick}
+                 onClick={() => handleLinkClick('/resource')}
                >
                  <BookOpen className="w-8 h-8 mr-4" />
                  Resource
@@ -328,7 +351,7 @@ function NavBar() {
                <Link
                  className="flex items-center text-3xl font-extrabold text-gray-800 py-3 border-b border-gray-100 hover:text-[#6b95ff] transition-colors"
                  href="/contact"
-                 onClick={handleLinkClick}
+                 onClick={() => handleLinkClick('/contact')}
                >
                  <Phone className="w-8 h-8 mr-4" />
                  Contact us
